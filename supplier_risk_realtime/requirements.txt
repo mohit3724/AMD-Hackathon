@@ -1,0 +1,11 @@
+crewai
+gradio
+requests
+pandas
+numpy
+yfinance
+plotly
+ipywidgets
+networkx
+matplotlib
+python-dateutil
