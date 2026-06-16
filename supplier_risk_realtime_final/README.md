@@ -4,7 +4,7 @@ This build is for the AMD hackathon procurement / supplier-risk track.
 
 It is designed as a real-time control tower instead of a static scoring notebook.
 
-- The brain runs on an open-source Hugging Face model served locally on the AMD GPU.
+- The brain runs on an open-source QWEN model served locally on the AMD GPU.
 - CrewAI orchestrates the analyst agents.
 - Gradio shows the live dashboard.
 - The background work is visible while the monitor runs.
@@ -27,9 +27,12 @@ That fits supplier risk better than a single-agent chat flow because the problem
 
 The system polls public live sources at runtime:
 
-- GDELT global news
-- USGS earthquake feed
-- Yahoo Finance price history via `yfinance`
+GDELT_ENDPOINT    = "https://api.gdeltproject.org/api/v2/doc/doc"
+USGS_SIGNIFICANT  = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_hour.geojson"
+USGS_4_5_DAY      = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson"
+DDG_SEARCH        = "https://html.duckduckgo.com/html/"
+GNEWS_RSS         = "https://gnews.io/api/v4/search"          # free tier, no key needed for RSS fallback
+BING_NEWS_RSS     = "https://www.bing.com/news/search"
 
 These are fetched live, not taken from canned sample rows.
 
@@ -45,29 +48,17 @@ These are fetched live, not taken from canned sample rows.
 
 ## Model setup on AMD GPU
 
-Serve a Hugging Face model locally with vLLM. The notebook and app talk to that local endpoint.
-
-Example:
-
-```bash
-VLLM_USE_TRITON_FLASH_ATTN=0 \
-vllm serve Qwen/Qwen2.5-7B-Instruct \
+VLLM_USE_TRITON_FLASH_ATTN=0 vllm serve Qwen/Qwen2.5-7B-Instruct \
   --served-model-name Qwen/Qwen2.5-7B-Instruct \
   --api-key abc-123 \
   --port 8000 \
-  --trust-remote-code
-```
+  --trust-remote-code \
+  --max-model-len 8192 \
+  --dtype bfloat16 \
+  --enable-auto-tool-choice \
+  --tool-call-parser hermes
 
 The endpoint is local. It is protocol-compatible so CrewAI can talk to it cleanly.
-
-## Run in the AMD notebook
-
-```bash
-pip install -r requirements.txt
-python -m src.app
-```
-
-Or open the notebook:
 
 - `supplier_risk_intelligence_realtime.ipynb`
 
